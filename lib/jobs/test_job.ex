@@ -1,4 +1,4 @@
-defmodule TaskBunnyRollbar.TestJob do
+defmodule TaskBunnySentry.TestJob do
   @moduledoc false
   #
   # Handy sample job to try out the error reporting with TaskBunny.
