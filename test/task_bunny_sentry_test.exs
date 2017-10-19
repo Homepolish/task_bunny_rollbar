@@ -1,17 +1,12 @@
-defmodule TaskBunnyRollbarTest do
+defmodule TaskBunnySentryTest do
   use ExUnit.Case
   alias TaskBunny.JobError
-  alias TaskBunnyRollbar.TestJob
-  import TaskBunnyRollbar
+  alias TaskBunnySentry.TestJob
+  import TaskBunnySentry
   import ExUnit.CaptureLog
 
   @job TestJob
   @payload %{"test" => true}
-
-  defp wait_for_rollbax do
-    # meh
-    :timer.sleep(50)
-  end
 
   describe "report_job_error/1" do
     test "handle an exception" do
@@ -25,7 +20,6 @@ defmodule TaskBunnyRollbarTest do
 
       assert capture_log(fn ->
         report_job_error(error)
-        wait_for_rollbax()
       end) =~ ~r/RuntimeError/
     end
 
@@ -40,7 +34,6 @@ defmodule TaskBunnyRollbarTest do
 
       assert capture_log(fn ->
         report_job_error(error)
-        wait_for_rollbax()
       end) =~ ~r/exit/
     end
 
@@ -49,7 +42,6 @@ defmodule TaskBunnyRollbarTest do
 
       assert capture_log(fn ->
         report_job_error(error)
-        wait_for_rollbax()
       end) =~ ~r/timeout/
     end
 
@@ -58,7 +50,6 @@ defmodule TaskBunnyRollbarTest do
 
       assert capture_log(fn ->
         report_job_error(error)
-        wait_for_rollbax()
       end) =~ ~r/error_detail/
     end
   end

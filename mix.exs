@@ -1,12 +1,12 @@
-defmodule TaskBunnyRollbar.Mixfile do
+defmodule TaskBunnySentry.Mixfile do
   use Mix.Project
 
   @version "0.1.1"
-  @description "TaskBunny job failure backend that reports the error to Rollbar"
+  @description "TaskBunny job failure backend that reports the error to Sentry"
 
   def project do
     [
-      app: :task_bunny_rollbar,
+      app: :task_bunny_sentry,
       version: @version,
       elixir: "~> 1.4",
       elixirc_paths: elixirc_paths(Mix.env),
@@ -16,7 +16,7 @@ defmodule TaskBunnyRollbar.Mixfile do
       docs: [
         extras: ["README.md"], main: "readme",
         source_ref: "v#{@version}",
-        source_url: "https://github.com/shinyscorpion/task_bunny_rollbar"
+        source_url: "https://github.com/homepolish/task_bunny_sentry"
       ],
       description: @description,
       package: package()
@@ -25,7 +25,6 @@ defmodule TaskBunnyRollbar.Mixfile do
 
   def application do
     [
-      extra_applications: [:rollbax]
     ]
   end
 
@@ -34,8 +33,8 @@ defmodule TaskBunnyRollbar.Mixfile do
 
   defp deps do
     [
-      {:rollbax, "~> 0.6"},
       {:task_bunny, "~> 0.2"},
+      {:sentry, "~> 6.0.0"},
 
       # dev
       {:ex_doc, "~> 0.14", only: :dev},
@@ -45,7 +44,7 @@ defmodule TaskBunnyRollbar.Mixfile do
 
   defp package do
     [
-      name: :task_bunny_rollbar,
+      name: :task_bunny_sentry,
       files: [
         "mix.exs", "README.md", "LICENSE.md", # Project files
         "lib"
@@ -55,10 +54,11 @@ defmodule TaskBunnyRollbar.Mixfile do
         "Francesco Grammatico",
         "Ian Luites",
         "Ricardo Perez",
-        "Tatsuya Ono"
+        "Tatsuya Ono",
+        "Dylan Reile"
       ],
       licenses: ["MIT"],
-      links: %{"Github" => "https://github.com/shinyscorpion/task_bunny_rollbar"}
+      links: %{"Github" => "https://github.com/homepolish/task_bunny_sentry"}
     ]
   end
 end

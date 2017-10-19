@@ -1,9 +1,10 @@
-defmodule TaskBunnyRollbar do
+defmodule TaskBunnySentry do
   @moduledoc """
-  A TaskBunny failure backend that reports to Rollbar.
+  A TaskBunny failure backend that reports to Sentry.
   """
   use TaskBunny.FailureBackend
   alias TaskBunny.JobError
+  require Logger
 
   def report_job_error(error = %JobError{error_type: :exception}) do
     report_error :error, error.exception, error
@@ -28,29 +29,34 @@ defmodule TaskBunnyRollbar do
     |> report_message(error)
   end
 
-  defp report_error(kind, rollbar_error, error) do
-    Rollbax.report(
-      kind,
-      rollbar_error,
-      error.stacktrace || [],
-      custom(error),
-      occurrence(error)
+  defp report_error(kind, sentry_error, error) do
+    Logger.error inspect(error)
+    Sentry.capture_exception(
+      sentry_error,
+      [
+        stacktrace: error.stacktrace || [],
+        extra: %{
+          kind: kind,
+          custom: custom(error),
+          occurrence: occurrence(error)
+        }
+      ]
     )
   end
 
   defp report_message(message, error) do
-    # Rollbax doesn't do a good job to report non exception.
-    # Use private module to report.
-    body = %{
-      "message" => %{
-        "body" => message,
-        "job" => error.job
-      }
-    }
-
-    Rollbax.Client.emit(
-      :error, unix_time(), body,
-      custom(error), occurrence(error)
+    # Provide more detail around non exceptions.
+    Logger.error inspect(error)
+    Sentry.capture_exception(
+      message,
+      [
+        extra: %{
+          job: error.job,
+          unix_time: unix_time(),
+          custom: custom(error),
+          occurrence: occurrence(error)
+        }
+      ]
     )
   end
 
