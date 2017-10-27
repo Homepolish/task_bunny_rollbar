@@ -38,19 +38,24 @@ defmodule TaskBunnySentry do
   end
 
   defp report_error(naked_exception, stacktrace, wrapped_error) do
-    Logger.error inspect(wrapped_error)
+    Logger.error "TaskBunny.JobError: #{inspect(terse_error(wrapped_error))}"
     result = Sentry.capture_exception(
       naked_exception,
       [
         stacktrace: stacktrace,
         extra: %{
+          meta: inspect(wrapped_error.meta),
           job: wrapped_error.job,
           job_payload: wrapped_error.payload,
-          pid: wrapped_error.pid,
+          pid: inspect(wrapped_error.pid),
           exit: wrapped_error.reason,
           return_value: inspect(wrapped_error.return_value)
         }
       ]
     )
+  end
+
+  defp terse_error(error) do
+    Map.drop(error, [:job, :payload, :__struct__, :stacktrace, :reason, :meta, :pid, :raw_body])
   end
 end
