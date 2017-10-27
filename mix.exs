@@ -1,7 +1,7 @@
 defmodule TaskBunnySentry.Mixfile do
   use Mix.Project
 
-  @version "0.1.1"
+  @version "0.1.2"
   @description "TaskBunny job failure backend that reports the error to Sentry"
 
   def project do
@@ -55,7 +55,8 @@ defmodule TaskBunnySentry.Mixfile do
         "Ian Luites",
         "Ricardo Perez",
         "Tatsuya Ono",
-        "Dylan Reile"
+        "Dylan Reile",
+        "Erik Reedstrom"
       ],
       licenses: ["MIT"],
       links: %{"Github" => "https://github.com/homepolish/task_bunny_sentry"}
