@@ -39,7 +39,7 @@ defmodule TaskBunnySentry do
 
   defp report_error(naked_exception, stacktrace, wrapped_error) do
     Logger.error "TaskBunny.JobError: #{inspect(terse_error(wrapped_error))}"
-    result = Sentry.capture_exception(
+    Sentry.capture_exception(
       naked_exception,
       [
         stacktrace: stacktrace,
