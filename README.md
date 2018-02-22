@@ -12,17 +12,9 @@ def deps do
 end
 ```
 
-## Sample configuration
+## Configuration
 
 ```elixir
-config :sentry,
-  dsn: "YOUR_SENTRY_DSN",
-  included_environments: ~w(development),
-  environment_name: "development",
-  enable_source_code_context: true,
-  root_source_code_path: File.cwd!,
-  tags: %{env: "development"}
-
 config :task_bunny,
   failure_backend: [TaskBunnySentry]
 ```
@@ -30,29 +22,52 @@ config :task_bunny,
 Check [TaskBunny](https://github.com/shinyscorpion/task_bunny#failure-backends) for
 more configuration options.
 
-## Gotcha
+## Customization
 
-#### Report only when the job is rejected
+### Report only rejected
 
-You might not want to report the failures which are going to be retried.
-You can do it by writing a thin wrapper in your application.
+Sometimes it's best to report only when the job has entered a rejected state.
+To do this, one can write a wrapper around the reporting module, pattern matting on the `JobError`.
 
 ```elixir
 defmodule TaskBunnySentryWrapper do
   use TaskBunny.FailureBackend
   alias TaskBunny.JobError
 
-  # reject = true means the job won't be retried.
+  # Match only on rejected state
   def report_job_error(error = %JobError{reject: true}),
     do: TaskBunnySentry.report_job_error(error)
 
-  # otherwise ignore.
+  # Otherwise ignore
   def report_job_error(_), do: nil
 end
 ```
 
-Don't forget to set the wrapper module as your failure backend.
+### Passing additional exception fields
 
+For instances where one needs to pass additional meta information, a wrapper and be similarly used
+to extract values from the exception struct.
+
+```elixir
+defmodule FooError do
+  defexception([:message, :foo, :fizz])
+end
+
+defmodule TaskBunnySentryWrapper do
+  use TaskBunny.FailureBackend
+  alias TaskBunny.JobError
+
+  # Define the props to be collected from FooError
+  def report_job_error(error = %JobError{exception: %FooError{}}),
+    do: TaskBunnySentry.report_job_error(error, extra: [:foo, :fizz])
+
+  # Otherwise delegate
+  def report_job_error(error), do: TaskBunnySentry.report_job_error(error)
+end
+```
+
+> **Note:** When using a wrapper module, it must be set as the failure backend.
+>
 ```elixir
 config :task_bunny, failure_backend: [TaskBunnySentryWrapper]
 ```
