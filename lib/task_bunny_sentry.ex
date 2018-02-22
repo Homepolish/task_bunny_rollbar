@@ -3,32 +3,30 @@ defmodule TaskBunnySentry do
   A TaskBunny failure backend that reports to Sentry.
   """
   use TaskBunny.FailureBackend
+  
   alias TaskBunny.JobError
-  require Logger
-
-  defexception [:message]
 
   def report_job_error(error = %JobError{error_type: :exception}) do
     report_error(error.exception, error.stacktrace, error)
   end
 
   def report_job_error(error = %JobError{error_type: :exit}) do
-    %TaskBunnySentry{message: "Unexpected exit signal"}
+    %TaskBunnyError{message: "Unexpected exit signal"}
     |> report_error(error.stacktrace, error)
   end
 
   def report_job_error(error = %JobError{error_type: :return_value}) do
-    %TaskBunnySentry{message: "Unexpected return value"}
+    %TaskBunnyError{message: "Unexpected return value"}
     |> report_error(original_stacktrace(Process.info(self(), :current_stacktrace)), error)
   end
 
   def report_job_error(error = %JobError{error_type: :timeout}) do
-    %TaskBunnySentry{message: "Timeout error"}
+    %TaskBunnyError{message: "Timeout error"}
     |> report_error(original_stacktrace(Process.info(self(), :current_stacktrace)), error)
   end
 
   def report_job_error(error = %JobError{}) do
-    %TaskBunnySentry{message: "Unknown error"}
+    %TaskBunnyError{message: "Unknown error"}
     |> report_error(original_stacktrace(Process.info(self(), :current_stacktrace)), error)
   end
 
@@ -38,7 +36,6 @@ defmodule TaskBunnySentry do
   end
 
   defp report_error(naked_exception, stacktrace, wrapped_error) do
-    Logger.error "TaskBunny.JobError: #{inspect(terse_error(wrapped_error))}"
     Sentry.capture_exception(
       naked_exception,
       [
@@ -53,9 +50,5 @@ defmodule TaskBunnySentry do
         }
       ]
     )
-  end
-
-  defp terse_error(error) do
-    Map.drop(error, [:job, :payload, :__struct__, :stacktrace, :reason, :meta, :pid, :raw_body])
   end
 end

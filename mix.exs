@@ -24,8 +24,7 @@ defmodule TaskBunnySentry.Mixfile do
   end
 
   def application do
-    [
-    ]
+    []
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
@@ -34,11 +33,10 @@ defmodule TaskBunnySentry.Mixfile do
   defp deps do
     [
       {:task_bunny, "~> 0.2"},
-      {:sentry, "~> 6.0.0"},
-
-      # dev
+      {:sentry, "~> 6.0"},
       {:ex_doc, "~> 0.14", only: :dev},
-      {:inch_ex, "~> 0.5", only: :dev}
+      {:inch_ex, "~> 0.5", only: :dev},
+      {:mox, "~> 0.3", only: :test}
     ]
   end
 
@@ -50,13 +48,10 @@ defmodule TaskBunnySentry.Mixfile do
         "lib"
       ],
       maintainers: [
-        "Elliott Hilaire",
-        "Francesco Grammatico",
-        "Ian Luites",
-        "Ricardo Perez",
-        "Tatsuya Ono",
-        "Dylan Reile",
-        "Erik Reedstrom"
+        "Johnny Feng",
+        "Erik Reedstrom",
+        "James Stradling",
+        "Cesario Uy",
       ],
       licenses: ["MIT"],
       links: %{"Github" => "https://github.com/homepolish/task_bunny_sentry"}
