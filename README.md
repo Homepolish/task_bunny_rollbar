@@ -8,7 +8,7 @@ TaskBunny failure backend for Sentry. A port of [task_bunny_rollbar](https://git
 
 ```elixir
 def deps do
-  [{:task_bunny_sentry, "~> 0.1.2"}]
+  [{:task_bunny_sentry, "~> 0.1.3"}]
 end
 ```
 
