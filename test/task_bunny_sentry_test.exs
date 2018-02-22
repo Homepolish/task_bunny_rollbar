@@ -1,9 +1,13 @@
 defmodule TaskBunnySentryTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+
+  import Mox
+
   alias TaskBunny.JobError
   alias TaskBunnySentry.TestJob
-  import TaskBunnySentry
-  import ExUnit.CaptureLog
+
+  setup :set_mox_from_context
+  setup :verify_on_exit!
 
   @job TestJob
   @payload %{"test" => true}
@@ -18,9 +22,24 @@ defmodule TaskBunnySentryTest do
         end
       error = JobError.handle_exception(@job, @payload, ex)
 
-      assert capture_log(fn ->
-        report_job_error(error)
-      end) =~ ~r/RuntimeError/
+      expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
+        assert event.exception == [%{module: nil, type: RuntimeError, value: "Hello"}]
+        assert event.extra == %{
+          exit: nil,
+          job: TaskBunnySentry.TestJob,
+          job_payload: %{"test" => true},
+          meta: "%{}",
+          pid: "nil",
+          return_value: "nil"
+        }
+
+        {:ok, Task.async(fn -> {:ok, id} end)}
+      end)
+
+      {:ok, task} = TaskBunnySentry.report_job_error(error)
+      {:ok, event_id} = Task.await(task)
+
+      assert Regex.match?(~r/^[a-f0-9]{32}$/, event_id)
     end
 
     test "handle the exit signal" do
@@ -32,25 +51,70 @@ defmodule TaskBunnySentryTest do
         end
       error = JobError.handle_exit(@job, @payload, reason)
 
-      assert capture_log(fn ->
-        report_job_error(error)
-      end) =~ ~r/exit/
+      expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
+        assert event.exception == [%{module: nil, type: TaskBunnyError, value: "Unexpected exit signal"}]
+        assert event.extra == %{
+          exit: :test,
+          job: TaskBunnySentry.TestJob,
+          job_payload: %{"test" => true},
+          meta: "%{}",
+          pid: "nil",
+          return_value: "nil"
+        }
+
+        {:ok, Task.async(fn -> {:ok, id} end)}
+      end)
+
+      {:ok, task} = TaskBunnySentry.report_job_error(error)
+      {:ok, event_id} = Task.await(task)
+
+      assert Regex.match?(~r/^[a-f0-9]{32}$/, event_id)
     end
 
     test "handle timeout error" do
       error = JobError.handle_timeout(@job, @payload)
 
-      assert capture_log(fn ->
-        report_job_error(error)
-      end) =~ ~r/timeout/
+      expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
+        assert event.exception == [%{module: nil, type: TaskBunnyError, value: "Timeout error"}]
+        assert event.extra == %{
+          exit: nil,
+          job: TaskBunnySentry.TestJob,
+          job_payload: %{"test" => true},
+          meta: "%{}",
+          pid: "nil",
+          return_value: "nil"
+        }
+
+        {:ok, Task.async(fn -> {:ok, id} end)}
+      end)
+
+      {:ok, task} = TaskBunnySentry.report_job_error(error)
+      {:ok, event_id} = Task.await(task)
+
+      assert Regex.match?(~r/^[a-f0-9]{32}$/, event_id)
     end
 
     test "handle the invlid return error" do
       error = JobError.handle_return_value(@job, @payload, {:error, :error_detail})
 
-      assert capture_log(fn ->
-        report_job_error(error)
-      end) =~ ~r/error_detail/
+      expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
+        assert event.exception == [%{module: nil, type: TaskBunnyError, value: "Unexpected return value"}]
+        assert event.extra == %{
+          exit: nil,
+          job: TaskBunnySentry.TestJob,
+          job_payload: %{"test" => true},
+          meta: "%{}",
+          pid: "nil",
+          return_value: "{:error, :error_detail}"
+        }
+
+        {:ok, Task.async(fn -> {:ok, id} end)}
+      end)
+
+      {:ok, task} = TaskBunnySentry.report_job_error(error)
+      {:ok, event_id} = Task.await(task)
+
+      assert Regex.match?(~r/^[a-f0-9]{32}$/, event_id)
     end
   end
 end
