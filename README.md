@@ -74,6 +74,6 @@ config :task_bunny, failure_backend: [TaskBunnySentryWrapper]
 
 ## Copyright and License
 
-Copyright (c) 2017, SQUARE ENIX LTD.
+Copyright (c) 2018 Homepolish, Inc.
 
 TaskBunnySentry code is licensed under the [MIT License](LICENSE.md).
