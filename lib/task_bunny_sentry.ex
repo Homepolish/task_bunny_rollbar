@@ -58,15 +58,21 @@ defmodule TaskBunnySentry do
         return_value: inspect(wrapped_error.return_value)
       })
 
-    Sentry.capture_exception(naked_exception, stacktrace: stacktrace, extra: extra)
-    |> case do
-      {:ok, _event_id} = result ->
-        result
-
+    with {:ok, _event_id} = result <-
+           Sentry.capture_exception(naked_exception, stacktrace: stacktrace, extra: extra) do
+      result
+    else
       {:error, reason} ->
         Logger.error("#{__MODULE__}: Could not send error to upstream.
           JobError: #{inspect(naked_exception)} : #{inspect(extra)}
           Reason: #{inspect(reason)}")
+
+        :error
+
+      err ->
+        Logger.error("#{__MODULE__}: unexpected error sending to upstream.
+          JobError: #{inspect(naked_exception)} : #{inspect(extra)}
+          Reason: #{inspect(err)}")
 
         :error
     end
