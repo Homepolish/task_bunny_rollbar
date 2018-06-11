@@ -128,7 +128,7 @@ defmodule TaskBunnySentryTest do
       assert Regex.match?(~r/^[a-f0-9]{32}$/, event_id)
     end
 
-    test "handle the invlid return error" do
+    test "handle the invalid return error" do
       error = JobError.handle_return_value(@job, @payload, {:error, :error_detail})
 
       expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
@@ -149,6 +149,27 @@ defmodule TaskBunnySentryTest do
       {:ok, event_id} = Task.await(task)
 
       assert Regex.match?(~r/^[a-f0-9]{32}$/, event_id)
+    end
+
+    test "handle failure of upstream timeout" do
+      error = JobError.handle_return_value(@job, @payload, {:error, :error_detail})
+
+      expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
+        assert event.exception == [%{module: nil, type: TaskBunnyError, value: "Unexpected return value"}]
+        assert event.extra == %{
+          exit: nil,
+          job: TaskBunnySentry.TestJob,
+          job_payload: %{"test" => true},
+          meta: "%{}",
+          pid: "nil",
+          return_value: "{:error, :error_detail}"
+        }
+
+        {:error, :generic_timeout_error}
+      end)
+
+      assert :error = TaskBunnySentry.report_job_error(error)
+
     end
   end
 end
