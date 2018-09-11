@@ -33,11 +33,12 @@ defmodule TaskBunnySentry.Mixfile do
 
   defp deps do
     [
-      {:task_bunny, "~> 0.2"},
-      {:sentry, "~> 7.0"},
       {:ex_doc, "~> 0.14", only: :dev},
       {:inch_ex, "~> 0.5", only: :dev},
-      {:mox, "~> 0.3", only: :test}
+      {:jason, "~> 1.1"},
+      {:mox, "~> 0.3", only: :test},
+      {:sentry, "~> 7.0"},
+      {:task_bunny, "~> 0.2"}
     ]
   end
 
