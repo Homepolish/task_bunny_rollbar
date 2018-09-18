@@ -1,6 +1,7 @@
 defmodule TaskBunnySentryTest do
   use ExUnit.Case, async: true
 
+  import ExUnit.CaptureLog
   import Mox
 
   alias TaskBunny.JobError
@@ -20,18 +21,20 @@ defmodule TaskBunnySentryTest do
         rescue
           e in RuntimeError -> e
         end
+
       error = JobError.handle_exception(@job, @payload, ex)
 
       expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
         assert event.exception == [%{module: nil, type: RuntimeError, value: "Hello"}]
+
         assert event.extra == %{
-          exit: nil,
-          job: TaskBunnySentry.TestJob,
-          job_payload: %{"test" => true},
-          meta: "%{}",
-          pid: "nil",
-          return_value: "nil"
-        }
+                 exit: nil,
+                 job: TaskBunnySentry.TestJob,
+                 job_payload: %{"test" => true},
+                 meta: "%{}",
+                 pid: "nil",
+                 return_value: "nil"
+               }
 
         {:ok, Task.async(fn -> {:ok, id} end)}
       end)
@@ -46,6 +49,7 @@ defmodule TaskBunnySentryTest do
       defmodule FooError do
         defexception([:message, :foo, :fizz])
       end
+
       ex =
         try do
           raise FooError, message: "Foo", foo: "bar", fizz: "buzz"
@@ -57,15 +61,16 @@ defmodule TaskBunnySentryTest do
 
       expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
         assert event.exception == [%{module: nil, type: FooError, value: "Foo"}]
+
         assert event.extra == %{
-          exit: nil,
-          job: TaskBunnySentry.TestJob,
-          job_payload: %{"test" => true},
-          meta: "%{}",
-          pid: "nil",
-          return_value: "nil",
-          foo: "bar"
-        }
+                 exit: nil,
+                 job: TaskBunnySentry.TestJob,
+                 job_payload: %{"test" => true},
+                 meta: "%{}",
+                 pid: "nil",
+                 return_value: "nil",
+                 foo: "bar"
+               }
 
         {:ok, Task.async(fn -> {:ok, id} end)}
       end)
@@ -83,18 +88,22 @@ defmodule TaskBunnySentryTest do
         catch
           _, reason -> reason
         end
+
       error = JobError.handle_exit(@job, @payload, reason)
 
       expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
-        assert event.exception == [%{module: nil, type: TaskBunnyError, value: "Unexpected exit signal"}]
+        assert event.exception == [
+                 %{module: nil, type: TaskBunnyError, value: "Unexpected exit signal"}
+               ]
+
         assert event.extra == %{
-          exit: :test,
-          job: TaskBunnySentry.TestJob,
-          job_payload: %{"test" => true},
-          meta: "%{}",
-          pid: "nil",
-          return_value: "nil"
-        }
+                 exit: :test,
+                 job: TaskBunnySentry.TestJob,
+                 job_payload: %{"test" => true},
+                 meta: "%{}",
+                 pid: "nil",
+                 return_value: "nil"
+               }
 
         {:ok, Task.async(fn -> {:ok, id} end)}
       end)
@@ -110,14 +119,15 @@ defmodule TaskBunnySentryTest do
 
       expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
         assert event.exception == [%{module: nil, type: TaskBunnyError, value: "Timeout error"}]
+
         assert event.extra == %{
-          exit: nil,
-          job: TaskBunnySentry.TestJob,
-          job_payload: %{"test" => true},
-          meta: "%{}",
-          pid: "nil",
-          return_value: "nil"
-        }
+                 exit: nil,
+                 job: TaskBunnySentry.TestJob,
+                 job_payload: %{"test" => true},
+                 meta: "%{}",
+                 pid: "nil",
+                 return_value: "nil"
+               }
 
         {:ok, Task.async(fn -> {:ok, id} end)}
       end)
@@ -132,15 +142,18 @@ defmodule TaskBunnySentryTest do
       error = JobError.handle_return_value(@job, @payload, {:error, :error_detail})
 
       expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
-        assert event.exception == [%{module: nil, type: TaskBunnyError, value: "Unexpected return value"}]
+        assert event.exception == [
+                 %{module: nil, type: TaskBunnyError, value: "Unexpected return value"}
+               ]
+
         assert event.extra == %{
-          exit: nil,
-          job: TaskBunnySentry.TestJob,
-          job_payload: %{"test" => true},
-          meta: "%{}",
-          pid: "nil",
-          return_value: "{:error, :error_detail}"
-        }
+                 exit: nil,
+                 job: TaskBunnySentry.TestJob,
+                 job_payload: %{"test" => true},
+                 meta: "%{}",
+                 pid: "nil",
+                 return_value: "{:error, :error_detail}"
+               }
 
         {:ok, Task.async(fn -> {:ok, id} end)}
       end)
@@ -155,21 +168,25 @@ defmodule TaskBunnySentryTest do
       error = JobError.handle_return_value(@job, @payload, {:error, :error_detail})
 
       expect(SentryMock, :send_event, fn %Sentry.Event{event_id: id} = event, _ ->
-        assert event.exception == [%{module: nil, type: TaskBunnyError, value: "Unexpected return value"}]
+        assert event.exception == [
+                 %{module: nil, type: TaskBunnyError, value: "Unexpected return value"}
+               ]
+
         assert event.extra == %{
-          exit: nil,
-          job: TaskBunnySentry.TestJob,
-          job_payload: %{"test" => true},
-          meta: "%{}",
-          pid: "nil",
-          return_value: "{:error, :error_detail}"
-        }
+                 exit: nil,
+                 job: TaskBunnySentry.TestJob,
+                 job_payload: %{"test" => true},
+                 meta: "%{}",
+                 pid: "nil",
+                 return_value: "{:error, :error_detail}"
+               }
 
         {:error, :generic_timeout_error}
       end)
 
-      assert :error = TaskBunnySentry.report_job_error(error)
-
+      assert capture_log(fn ->
+               assert :error = TaskBunnySentry.report_job_error(error)
+             end) =~ "Elixir.TaskBunnySentry: Could not send error to upstream."
     end
   end
 end
