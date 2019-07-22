@@ -51,15 +51,22 @@ defmodule TaskBunnySentry do
       |> Map.take(Keyword.get(opts, :extra, []))
       |> Map.merge(%{
         meta: inspect(wrapped_error.meta),
-        job: wrapped_error.job,
         job_payload: wrapped_error.payload,
         pid: inspect(wrapped_error.pid),
         exit: wrapped_error.reason,
         return_value: inspect(wrapped_error.return_value)
       })
 
+    tags = %{
+      job: wrapped_error.job
+    }
+
     with {:ok, _event_id} = result <-
-           Sentry.capture_exception(naked_exception, stacktrace: stacktrace, extra: extra) do
+           Sentry.capture_exception(naked_exception,
+             stacktrace: stacktrace,
+             tags: tags,
+             extra: extra
+           ) do
       result
     else
       {:error, reason} ->
