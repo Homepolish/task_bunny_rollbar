@@ -1,3 +1,5 @@
+This project is no longer actively maintained.
+
 # TaskBunnySentry
 
 [![Hex.pm](https://img.shields.io/hexpm/l/task_bunny_sentry.svg "License")](LICENSE.md)
